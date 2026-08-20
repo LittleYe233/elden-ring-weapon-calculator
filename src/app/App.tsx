@@ -29,6 +29,7 @@ import AffinityPicker from "./AffinityPicker.tsx";
 import Footer from "./Footer.tsx";
 import MiscFilterPicker from "./MiscFilterPicker.tsx";
 import WeaponPicker, { makeWeaponOptionsFromWeapon } from "./WeaponPicker.tsx";
+import LocalePicker from "./LocalePicker.tsx";
 import type { Weapon } from "../calculator/weapon.ts";
 
 const useMenuState = () => {
@@ -102,6 +103,7 @@ function RegulationVersionAlert({ children }: { children: ReactNode }) {
 export default function App() {
   const {
     regulationVersionName,
+    locale,
     affinityIds,
     weaponTypes,
     attributes,
@@ -116,6 +118,7 @@ export default function App() {
     reverse,
     selectedWeapons,
     setRegulationVersionName,
+    setLocale,
     setAffinityIds,
     setWeaponTypes,
     setAttribute,
@@ -208,6 +211,7 @@ export default function App() {
         numericalScaling={numericalScaling}
         attackPowerTypes={attackPowerTypes}
         spellScaling={spellScaling}
+        locale={locale}
         onSortByChanged={setSortBy}
         onReverseChanged={setReverse}
       />
@@ -228,8 +232,21 @@ export default function App() {
         .values(),
     ].filter((weapon) => (includeDLC ? true : !weapon.dlc));
 
-    return makeWeaponOptionsFromWeapon(dedupedWeaponsByWeaponName);
-  }, [weapons, includeDLC]);
+    return makeWeaponOptionsFromWeapon(dedupedWeaponsByWeaponName, locale);
+  }, [weapons, includeDLC, locale]);
+
+  // Re-label already selected weapons when the available options change (e.g. when the
+  // display language is switched), keeping the English weapon name key stable
+  useEffect(() => {
+    const relocalizedWeapons = selectedWeapons.map(
+      (selectedWeapon) =>
+        weaponPickerOptions.find((option) => option.value === selectedWeapon.value) ??
+        selectedWeapon,
+    );
+    if (relocalizedWeapons.some((option, i) => option !== selectedWeapons[i])) {
+      setSelectedWeapons(relocalizedWeapons);
+    }
+  }, [weaponPickerOptions, selectedWeapons, setSelectedWeapons]);
 
   const drawerContent = (
     <>
@@ -237,6 +254,7 @@ export default function App() {
         regulationVersionName={regulationVersionName}
         onRegulationVersionNameChanged={setRegulationVersionName}
       />
+      <LocalePicker locale={locale} onLocaleChanged={setLocale} />
       <MiscFilterPicker
         showIncludeDLC={showIncludeDLC}
         includeDLC={includeDLC}

@@ -1,6 +1,7 @@
 import type { Attribute } from "./attributes.ts";
 import type { AttackPowerType } from "./attackPowerTypes.ts";
 import type { WeaponType } from "./weaponTypes.ts";
+import { defaultLocale, type Locale, type LocalizedNames } from "../locale.ts";
 
 export type AttackElementCorrect = Partial<
   Record<AttackPowerType, Partial<Record<Attribute, number | true>>>
@@ -87,4 +88,27 @@ export interface Weapon {
    * If true, this weapon is from the Shadow of the Erdtree expansion
    */
   dlc: boolean;
+
+  /**
+   * Localized display names for non-default locales. Missing locales fall back to English.
+   */
+  localizedNames?: LocalizedNames;
+}
+
+/**
+ * @returns the full display name of the weapon (e.g. "Heavy Nightrider Glaive") in the given
+ * locale, falling back to English when no translation exists
+ */
+export function getWeaponName(weapon: Weapon, locale: Locale): string {
+  return (locale !== defaultLocale && weapon.localizedNames?.[locale]?.name) || weapon.name;
+}
+
+/**
+ * @returns the base display name of the weapon without an affinity (e.g. "Nightrider Glaive")
+ * in the given locale, falling back to English when no translation exists
+ */
+export function getWeaponBaseName(weapon: Weapon, locale: Locale): string {
+  return (
+    (locale !== defaultLocale && weapon.localizedNames?.[locale]?.weaponName) || weapon.weaponName
+  );
 }

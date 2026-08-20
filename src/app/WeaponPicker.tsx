@@ -1,11 +1,13 @@
 import { Autocomplete, Box, TextField } from "@mui/material";
 import { memo, useCallback } from "react";
+import { getWeaponBaseName } from "../calculator/weapon.ts";
 import type { Weapon } from "../calculator/weapon.ts";
+import type { Locale } from "../locale.ts";
 import { weaponTypeLabels } from "./uiUtils.ts";
 
 export type WeaponOption = {
-  label: string; // weaponName
-  value: string; // weaponName
+  label: string; // display name in the current locale
+  value: string; // weaponName (always English, used as the stable selection key)
   type: string; // weaponType
 };
 
@@ -24,14 +26,16 @@ const sortByTypeThenName = (a: Weapon, b: Weapon): number => {
   // both primary and secondary values are equal
   return 0;
 };
-const makeOption = (weapon: Weapon): WeaponOption => ({
-  label: weapon.weaponName,
-  value: weapon.weaponName,
-  type: weaponTypeLabels.get(weapon.weaponType) || "",
-});
+const makeOption =
+  (locale: Locale) =>
+  (weapon: Weapon): WeaponOption => ({
+    label: getWeaponBaseName(weapon, locale),
+    value: weapon.weaponName,
+    type: weaponTypeLabels.get(weapon.weaponType) || "",
+  });
 
-export const makeWeaponOptionsFromWeapon = (weapons: Weapon[]): WeaponOption[] =>
-  weapons.sort(sortByTypeThenName).map(makeOption);
+export const makeWeaponOptionsFromWeapon = (weapons: Weapon[], locale: Locale): WeaponOption[] =>
+  weapons.sort(sortByTypeThenName).map(makeOption(locale));
 
 /**
  * An Autocomplete to allow for manually specifying weapons

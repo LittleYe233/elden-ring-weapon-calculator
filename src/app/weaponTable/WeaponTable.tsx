@@ -6,6 +6,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { AttackPowerType } from "../../calculator/calculator.ts";
 import type { Weapon, WeaponAttackResult } from "../../calculator/calculator.ts";
+import type { Locale } from "../../locale.ts";
 import type { SortBy } from "../../search/sortWeapons.ts";
 import getWeaponTableColumns from "./getWeaponTableColumns.tsx";
 import {
@@ -75,6 +76,11 @@ interface Props {
    * Include spell scaling columns in the table
    */
   spellScaling: boolean;
+
+  /**
+   * Display locale used for weapon names in the name column
+   */
+  locale: Locale;
 
   onSortByChanged(sortBy: SortBy): void;
   onReverseChanged(reverse: boolean): void;
@@ -202,6 +208,7 @@ function WeaponTable({
   numericalScaling,
   attackPowerTypes,
   spellScaling,
+  locale,
   onSortByChanged,
   onReverseChanged,
 }: Props) {
@@ -213,8 +220,9 @@ function WeaponTable({
         numericalScaling,
         attackPowerTypes,
         spellScaling,
+        locale,
       }),
-    [splitDamage, splitSpellScaling, numericalScaling, attackPowerTypes, spellScaling],
+    [splitDamage, splitSpellScaling, numericalScaling, attackPowerTypes, spellScaling, locale],
   );
 
   return (

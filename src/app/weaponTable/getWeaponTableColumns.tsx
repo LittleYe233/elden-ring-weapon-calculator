@@ -6,6 +6,7 @@ import {
   allDamageTypes,
   allStatusTypes,
 } from "../../calculator/calculator.ts";
+import type { Locale } from "../../locale.ts";
 import {
   damageTypeIcons,
   damageTypeLabels,
@@ -21,7 +22,7 @@ import {
   AttackPowerRenderer,
 } from "./tableRenderers.tsx";
 
-const nameColumn: WeaponTableColumnDef = {
+const makeNameColumn = (locale: Locale): WeaponTableColumnDef => ({
   key: "name",
   sortBy: "name",
   header: (
@@ -33,9 +34,9 @@ const nameColumn: WeaponTableColumnDef = {
     justifyContent: "start",
   },
   render([weapon, { upgradeLevel }]) {
-    return <WeaponNameRenderer weapon={weapon} upgradeLevel={upgradeLevel} />;
+    return <WeaponNameRenderer weapon={weapon} upgradeLevel={upgradeLevel} locale={locale} />;
   },
-};
+});
 
 const attackColumns = Object.fromEntries(
   allAttackPowerTypes.map((attackPowerType): [AttackPowerType, WeaponTableColumnDef] => [
@@ -233,6 +234,7 @@ interface WeaponTableColumnsOptions {
   numericalScaling: boolean;
   attackPowerTypes: ReadonlySet<AttackPowerType>;
   spellScaling: boolean;
+  locale: Locale;
 }
 
 export default function getWeaponTableColumns({
@@ -241,7 +243,9 @@ export default function getWeaponTableColumns({
   numericalScaling,
   attackPowerTypes,
   spellScaling,
+  locale,
 }: WeaponTableColumnsOptions): WeaponTableColumnGroupDef[] {
+  const nameColumn = makeNameColumn(locale);
   const includedStatusTypes = allStatusTypes.filter((statusType) =>
     attackPowerTypes.has(statusType),
   );

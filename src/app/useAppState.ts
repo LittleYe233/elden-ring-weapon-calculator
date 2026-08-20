@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { type Attribute, type Attributes, WeaponType } from "../calculator/calculator.ts";
+import { defaultLocale, type Locale } from "../locale.ts";
 import type { SortBy } from "../search/sortWeapons.ts";
 import type { RegulationVersionName } from "./regulationVersions.tsx";
 import regulationVersions from "./regulationVersions.tsx";
@@ -8,6 +9,7 @@ import { type WeaponOption } from "./WeaponPicker.tsx";
 
 interface AppState {
   readonly regulationVersionName: RegulationVersionName;
+  readonly locale: Locale;
   readonly attributes: Attributes;
   readonly twoHanding: boolean;
   readonly upgradeLevel: number;
@@ -25,6 +27,7 @@ interface AppState {
 
 interface UpdateAppState extends AppState {
   setRegulationVersionName(regulationVersionName: RegulationVersionName): void;
+  setLocale(locale: Locale): void;
   setAttribute(attribute: Attribute, value: number): void;
   setTwoHanding(twoHanding: boolean): void;
   setUpgradeLevel(upgradeLevel: number): void;
@@ -42,6 +45,7 @@ interface UpdateAppState extends AppState {
 
 const defaultAppState: AppState = {
   regulationVersionName: "latest",
+  locale: defaultLocale,
   attributes: {
     str: 30,
     dex: 30,
@@ -128,6 +132,9 @@ export default function useAppState() {
     () => ({
       setRegulationVersionName(regulationVersionName) {
         setAppState((prevAppState) => ({ ...prevAppState, regulationVersionName }));
+      },
+      setLocale(locale) {
+        setAppState((prevAppState) => ({ ...prevAppState, locale }));
       },
       setAttribute(attribute, value) {
         setAppState((prevAppState) => ({

@@ -9,6 +9,8 @@ import { memo } from "react";
 import { Box, Link, Typography } from "@mui/material";
 import RemoveIcon from "@mui/icons-material/Remove";
 import type { Weapon, Attribute } from "../../calculator/calculator.ts";
+import { getWeaponName } from "../../calculator/weapon.ts";
+import type { Locale } from "../../locale.ts";
 import { getAttributeLabel } from "../uiUtils.ts";
 
 export const blankIcon = <RemoveIcon color="disabled" fontSize="small" />;
@@ -27,11 +29,13 @@ export function round(value: number) {
 export const WeaponNameRenderer = memo(function WeaponNameRenderer({
   weapon,
   upgradeLevel,
+  locale,
 }: {
   weapon: Weapon;
   upgradeLevel: number;
+  locale: Locale;
 }) {
-  const text = `${weapon.name}${upgradeLevel > 0 ? ` +${upgradeLevel}` : ""}`;
+  const text = `${getWeaponName(weapon, locale)}${upgradeLevel > 0 ? ` +${upgradeLevel}` : ""}`;
   return (
     <Box>
       {weapon.url ? (

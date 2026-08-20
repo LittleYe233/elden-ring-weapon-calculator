@@ -5,6 +5,7 @@ import {
   WeaponType,
 } from "./calculator/calculator.ts";
 import type { AttackElementCorrect, Attribute, Weapon } from "./calculator/calculator.ts";
+import type { LocalizedNames } from "./locale.ts";
 
 export const defaultDamageCalcCorrectGraphId = 0;
 export const defaultStatusCalcCorrectGraphId = 6;
@@ -70,6 +71,7 @@ export interface EncodedWeaponJson {
   sorceryTool?: boolean;
   incantationTool?: boolean;
   dlc?: boolean;
+  localizedNames?: LocalizedNames;
 }
 
 /**
@@ -153,6 +155,7 @@ export function decodeRegulationData({
       statusSpEffectParamIds,
       attack: unupgradedAttack,
       attributeScaling: unupgradedAttributeScaling,
+      localizedNames,
       dlc = false,
       ...weapon
     }): Weapon => {
@@ -242,6 +245,7 @@ export function decodeRegulationData({
         calcCorrectGraphs: weaponCalcCorrectGraphs,
         scalingTiers,
         dlc,
+        localizedNames,
       };
     },
   );

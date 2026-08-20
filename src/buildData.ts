@@ -10,7 +10,7 @@ import {
   renameSync,
   writeFileSync,
 } from "node:fs";
-import { basename, join, parse } from "node:path";
+import { basename, dirname, join, parse } from "node:path";
 import { env } from "node:process";
 import { spawnSync } from "node:child_process";
 import { rmSync } from "node:fs";
@@ -33,6 +33,13 @@ import {
   defaultStatusCalcCorrectGraphId,
   defaultDamageCalcCorrectGraphId,
 } from "./regulationData.ts";
+import {
+  defaultLocale,
+  localeDirs,
+  type Locale,
+  type LocalizedNames,
+  type LocalizedWeaponNames,
+} from "./locale.ts";
 import vanillaWeaponIds from "./vanillaWeaponIds.ts";
 
 const debug = makeDebug("buildData");
@@ -149,14 +156,20 @@ function unpackFiles() {
     menuTextFmgFile,
   ];
 
+  const msgBndFiles = [
+    "menu.msgbnd.dcx",
+    "menu_dlc01.msgbnd.dcx",
+    "menu_dlc02.msgbnd.dcx",
+    "item.msgbnd.dcx",
+    "item_dlc01.msgbnd.dcx",
+    "item_dlc02.msgbnd.dcx",
+  ];
+
   const bndPaths = [
     "regulation.bin",
-    join("msg", "engus", "menu.msgbnd.dcx"),
-    join("msg", "engus", "menu_dlc01.msgbnd.dcx"),
-    join("msg", "engus", "menu_dlc02.msgbnd.dcx"),
-    join("msg", "engus", "item.msgbnd.dcx"),
-    join("msg", "engus", "item_dlc01.msgbnd.dcx"),
-    join("msg", "engus", "item_dlc02.msgbnd.dcx"),
+    ...localeDirs.flatMap(({ dir }) =>
+      msgBndFiles.map((msgBndFile) => join("msg", dir, msgBndFile)),
+    ),
   ].filter((path) => existsSync(join(dataDir, path)));
 
   mkdirSync(tmpDir, { recursive: true });
@@ -166,13 +179,20 @@ function unpackFiles() {
 
   witchy([...bndPaths.map((path) => join(tmpDir, path))]);
 
-  // Extract any fmg/param files we need, delete the rest of the temporary files
+  // Extract any fmg/param files we need, delete the rest of the temporary files. Files
+  // extracted from language message bnds are prefixed with the language directory so that
+  // identically-named files from different languages don't overwrite each other.
   const filesToExtract: string[] = [];
+  const extractedDestByPath = new Map<string, string>();
   for (const path of bndPaths) {
     const bndDir = join(tmpDir, path.replaceAll(".", "-"));
+    const isMsgBnd = path.startsWith("msg");
+    const languagePrefix = isMsgBnd ? `${basename(dirname(path))}-` : "";
     for (const file of readdirSync(bndDir)) {
       if (files.includes(file)) {
-        filesToExtract.push(join(bndDir, file));
+        const sourcePath = join(bndDir, file);
+        filesToExtract.push(sourcePath);
+        extractedDestByPath.set(sourcePath, join(tmpDir, `${languagePrefix}${basename(file)}.xml`));
       }
     }
   }
@@ -180,7 +200,7 @@ function unpackFiles() {
   witchy(filesToExtract);
 
   for (const file of filesToExtract) {
-    renameSync(`${file}.xml`, join(tmpDir, `${basename(file)}.xml`));
+    renameSync(`${file}.xml`, extractedDestByPath.get(file)!);
   }
 
   rmSync(join(tmpDir, "regulation.bin"));
@@ -485,9 +505,62 @@ const equipParamWeapons = readParam(join(tmpDir, equipParamWeaponFile));
 const reinforceParamWeapons = readParam(join(tmpDir, reinforceParamWeaponFile));
 const spEffectParams = readParam(join(tmpDir, spEffectFile));
 const menuValueTableParams = readParam(join(tmpDir, menuValueTableFile));
-const menuText = readFmgXml(join(tmpDir, menuTextFmgFile));
-const weaponNames = readFmgXml(join(tmpDir, weaponNameFmgFile));
-const dlcWeaponNames = readFmgXml(join(tmpDir, dlcWeaponNameFmgFile));
+// Names and menu text for the default language (English), prefixed with its message directory
+const defaultLocaleDir = localeDirs.find(({ locale }) => locale === defaultLocale)!.dir;
+const menuText = readFmgXml(join(tmpDir, `${defaultLocaleDir}-${menuTextFmgFile}`));
+const weaponNames = readFmgXml(join(tmpDir, `${defaultLocaleDir}-${weaponNameFmgFile}`));
+const dlcWeaponNames = readFmgXml(join(tmpDir, `${defaultLocaleDir}-${dlcWeaponNameFmgFile}`));
+
+interface LocaleWeaponNames {
+  names: Map<number, string | null>;
+  dlcNames: Map<number, string | null>;
+}
+
+// Collect weapon names for every non-default language in the locale manifest. Languages whose
+// message files weren't unpacked (e.g. a game copy without that language) are skipped,
+// degrading to English-only output.
+const localizedWeaponNames = new Map<Locale, LocaleWeaponNames>();
+for (const { locale, dir } of localeDirs) {
+  if (locale === defaultLocale) {
+    continue;
+  }
+
+  const namesFile = join(tmpDir, `${dir}-${weaponNameFmgFile}`);
+  if (!existsSync(`${namesFile}.xml`)) {
+    debug(`No weapon name data for locale ${locale}, skipping (fallback: ${defaultLocale})`);
+    continue;
+  }
+
+  localizedWeaponNames.set(locale, {
+    names: readFmgXml(namesFile),
+    dlcNames: existsSync(join(tmpDir, `${dir}-${dlcWeaponNameFmgFile}.xml`))
+      ? readFmgXml(join(tmpDir, `${dir}-${dlcWeaponNameFmgFile}`))
+      : new Map(),
+  });
+}
+
+// Keep only localized names whose id exists in the English data (the canonical key set),
+// warning about the rest. Empty/placeholder names are dropped silently; those weapons fall
+// back to English at runtime.
+const englishWeaponNameIds = new Set([...weaponNames.keys(), ...dlcWeaponNames.keys()]);
+const sanitizedLocalizedNames = new Map<Locale, Map<number, string | null>>(
+  [...localizedWeaponNames].map(([locale, { names, dlcNames }]) => {
+    const mergedNames = new Map([...names, ...dlcNames]);
+    const invalidIds: number[] = [];
+    for (const [id, name] of mergedNames) {
+      if (!englishWeaponNameIds.has(id)) {
+        console.warn(
+          `[${locale}] ignoring name "${name}" for weapon id ${id} not present in English data`,
+        );
+        invalidIds.push(id);
+      } else if (!name || name.includes("%null%") || name.includes("[ERROR]")) {
+        invalidIds.push(id);
+      }
+    }
+    invalidIds.forEach((id) => mergedNames.delete(id));
+    return [locale, mergedNames];
+  }),
+);
 
 function ifNotDefault<T>(value: T, defaultValue: T): T | undefined {
   return value === defaultValue ? undefined : value;
@@ -773,6 +846,20 @@ function parseWeapon(row: ParamRow): EncodedWeaponJson | null {
 
   const weaponName = (weaponNames.get(uninfusedWeaponId) ?? dlcWeaponNames.get(uninfusedWeaponId))!;
 
+  // Localized display names for every language that has both the full and the base name for
+  // this weapon. Missing languages aren't included and fall back to English at runtime.
+  const localizedEntries: [Locale, LocalizedWeaponNames][] = [];
+  for (const [locale, names] of sanitizedLocalizedNames) {
+    const localizedName = names.get(row.id);
+    const localizedWeaponName = names.get(uninfusedWeaponId);
+    if (localizedName != null && localizedWeaponName != null) {
+      localizedEntries.push([locale, { name: localizedName, weaponName: localizedWeaponName }]);
+    }
+  }
+  const localizedNames: LocalizedNames | undefined = localizedEntries.length
+    ? (Object.fromEntries(localizedEntries) as LocalizedNames)
+    : undefined;
+
   return {
     name,
     weaponName,
@@ -809,6 +896,7 @@ function parseWeapon(row: ParamRow): EncodedWeaponJson | null {
     incantationTool: ifNotDefault(row.enableMiracle === 1, false),
     dlc: ifNotDefault(dlc, false),
     variant: ifNotDefault(variantOverrides.get(row.id), null),
+    localizedNames,
   };
 }
 
