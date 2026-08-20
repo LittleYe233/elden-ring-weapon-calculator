@@ -895,7 +895,7 @@ function parseWeapon(row: ParamRow): EncodedWeaponJson | null {
     sorceryTool: ifNotDefault(row.enableMagic === 1, false),
     incantationTool: ifNotDefault(row.enableMiracle === 1, false),
     dlc: ifNotDefault(dlc, false),
-    variant: ifNotDefault(variantOverrides.get(row.id), null),
+    variant: ifNotDefault(variantOverrides.get(row.id), undefined),
     localizedNames,
   };
 }
@@ -1029,7 +1029,7 @@ function parseStatusSpEffectParams(
   return null;
 }
 
-let additionalWeaponsJson: EncodedWeaponJson[] = [];
+const additionalWeaponsJson: EncodedWeaponJson[] = [];
 
 for (const [id, name] of nameOverrides) {
   weaponNames.set(id, name);

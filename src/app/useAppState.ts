@@ -67,6 +67,22 @@ const defaultAppState: AppState = {
   selectedWeapons: [],
 };
 
+function getBasePath() {
+  const basePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname;
+  return basePath.endsWith("/") ? basePath : `${basePath}/`;
+}
+
+function getRegulationVersionFromUrl() {
+  const basePath = getBasePath();
+  const pathname = window.location.pathname;
+
+  if (!pathname.startsWith(basePath)) {
+    return "";
+  }
+
+  return pathname.slice(basePath.length).replace(/\/+$/, "");
+}
+
 /**
  * @returns the initial state of the app, restored from localstorage and the URL if available
  */
@@ -82,7 +98,7 @@ function getInitialAppState() {
     /* ignored */
   }
 
-  const regulationVersionName = window.location.pathname.substring(1);
+  const regulationVersionName = getRegulationVersionFromUrl();
   if (regulationVersionName && regulationVersionName in regulationVersions) {
     appState.regulationVersionName = regulationVersionName as RegulationVersionName;
   }
@@ -98,10 +114,11 @@ function onAppStateChanged(appState: AppState) {
 }
 
 function updateUrl(regulationVersionName: RegulationVersionName) {
+  const basePath = getBasePath();
   window.history.replaceState(
     null,
     "",
-    `/${regulationVersionName === "latest" ? "" : regulationVersionName}`,
+    `${basePath}${regulationVersionName === "latest" ? "" : regulationVersionName}`,
   );
 }
 

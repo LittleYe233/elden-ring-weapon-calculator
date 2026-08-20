@@ -2,26 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/png" sizes="24x24" href="/favicon24x24.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon32x32.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon48x48.png" />
+    <link rel="icon" type="image/png" sizes="24x24" href="%BASE_URL%favicon24x24.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%favicon32x32.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%favicon48x48.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#1f1d17" />
     <meta
       name="description"
       content="ELDEN RING weapon attack calculator updated for Shadow of the Erdtree, ELDEN RING Reforged, and The Convergence Mod"
     />
-    <meta property="og:image" content="/ogimage.png?2" />
+    <meta property="og:image" content="%BASE_URL%ogimage.png?2" />
     <meta name="twitter:card" content="summary_large_image" />
     <link
       rel="preload"
-      href="/regulation-vanilla-v1.14.js?%VITE_DATA_FORMAT%"
+      href="%BASE_URL%regulation-vanilla-v1.14.js?%VITE_DATA_FORMAT%"
       as="fetch"
       crossorigin="anonymous"
     />
-    <link rel="preload" href="/prompt-v10-latin-medium.woff2" as="font" crossorigin="anonymous" />
+    <link
+      rel="preload"
+      href="%BASE_URL%prompt-v10-latin-medium.woff2"
+      as="font"
+      crossorigin="anonymous"
+    />
     <title>Elden Ring Weapon Calculator</title>
-    <link rel="canonical" href="%VITE_HOST%/" />
+    <link rel="canonical" href="%BASE_URL%" />
     <script
       defer
       src="https://static.cloudflareinsights.com/beacon.min.js"

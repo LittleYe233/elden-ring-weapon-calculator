@@ -7,12 +7,7 @@ import {
   type AffinityOption,
 } from "./uiUtils.ts";
 
-export type RegulationVersionName =
-  | "latest"
-  | "reforged"
-  | "convergence2"
-  | "convergence"
-  | "clevers";
+export type RegulationVersionName = "latest" | "reforged" | "convergence" | "clevers";
 
 export interface RegulationVersion {
   name: string;
@@ -54,7 +49,12 @@ const regulationVersions: Record<RegulationVersionName, RegulationVersion> = {
   latest: {
     name: "Patch 1.16 (latest)",
     affinityOptions,
-    fetch: () => fetch(`/regulation-vanilla-v1.14.js?${import.meta.env.VITE_DATA_FORMAT}`),
+    fetch: () =>
+      fetch(
+        `${import.meta.env.BASE_URL}regulation-vanilla-v1.14.js?${
+          import.meta.env.VITE_DATA_FORMAT
+        }`,
+      ),
   },
   reforged: {
     name: "ELDEN RING Reforged",
@@ -74,7 +74,12 @@ const regulationVersions: Record<RegulationVersionName, RegulationVersion> = {
     affinityOptions: reforgedAffinityOptions,
     disableTwoHandingAttackPowerBonus: true,
     ineffectiveAttributePenalty: 0.5,
-    fetch: () => fetch(`/regulation-reforged-v2.2.3.4.js?${import.meta.env.VITE_DATA_FORMAT}`),
+    fetch: () =>
+      fetch(
+        `${import.meta.env.BASE_URL}regulation-reforged-v2.2.3.4.js?${
+          import.meta.env.VITE_DATA_FORMAT
+        }`,
+      ),
   },
   convergence: {
     name: "The Convergence Mod",
@@ -94,7 +99,12 @@ const regulationVersions: Record<RegulationVersionName, RegulationVersion> = {
     affinityOptions: convergenceAffinityOptions,
     maxUpgradeLevel: 15,
     splitSpellScaling: true,
-    fetch: () => fetch(`/regulation-convergence-v3.0.1.2.js?${import.meta.env.VITE_DATA_FORMAT}`),
+    fetch: () =>
+      fetch(
+        `${import.meta.env.BASE_URL}regulation-convergence-v3.0.1.2.js?${
+          import.meta.env.VITE_DATA_FORMAT
+        }`,
+      ),
   },
   clevers: {
     name: "Clever's Moveset Modpack",
@@ -113,7 +123,12 @@ const regulationVersions: Record<RegulationVersionName, RegulationVersion> = {
     ),
     affinityOptions,
     disableWeaponTypeFilter: true,
-    fetch: () => fetch(`/regulation-clevers-v25.0.js?${import.meta.env.VITE_DATA_FORMAT}`),
+    fetch: () =>
+      fetch(
+        `${import.meta.env.BASE_URL}regulation-clevers-v25.0.js?${
+          import.meta.env.VITE_DATA_FORMAT
+        }`,
+      ),
   },
 };
 
